@@ -1,8 +1,11 @@
-import React,{useState} from "react";
+import React,{useState,useEffect} from "react";
 import axios from "axios";  
-// import {}
-// import InputBox from "./InputBox";
-const InputBox = ({ type, placeholder, name, value, onChange }) => {
+import {useSelector,useDispatch} from "react-redux";
+import {signup} from "../features/auth/authSlice";
+
+const InputBox = ({ type, placeholder, name, value, onChange,labelText }) => {
+     
+
     return (
       <div className="mb-6">
         <input
@@ -13,6 +16,7 @@ const InputBox = ({ type, placeholder, name, value, onChange }) => {
           onChange={onChange}
           className="w-full rounded-md border border-stroke bg-transparent px-5 py-3 text-base text-black-900 outline-none focus:border-primary focus-visible:shadow-none dark:border-dark-3 dark:text-grey-500"
         />
+        {((labelText!=null)&&labelText!=="")?<label className={ (labelText==="Strong password")?`text-green-500`:`text-red-500`}>{labelText}</label>:null}
       </div>
     );
   };
@@ -20,34 +24,39 @@ const Signup = () => {
     const [email, setEmail] = useState("");
     const [name, setname] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [submit, setSubmit] = useState(false);
-   
+    const [passwordMessage, setPasswordMessage] = useState("");
+    const [emailMessage, setEmailMessage] = useState("");
+    const [nameMessage, setNameMessage] = useState("");
+    const [valid, setValid] = useState(false);
+    const dispatch=useDispatch();
+    
+    const handleGoogleSignup = () => {
+      window.location.href = "/api/user/auth/google";}
 
     const handleSignup = async (e) => {
-      try {
       e.preventDefault();
       if(email===""||name===""||password===""){
-        setError("All fields are required");
         console.log("All fields are required");
         return;
+      }       
+      try {
+        if(!valid){
+          console.log("Check the fields again");
+          return;
+        }else{
+          await dispatch(signup({ email, name, password }));
+          const {token} = useSelector((state) => state.auth);
+          if(token){
+            window.location.href = "/";
+          }}
+      } catch (error) {
+        console.log(error);
       }
-      setLoading(true);
-      const response = await axios.post("/api/user/signup", {email,name,password});
-      if(response){
-        console.log(response.data);
-        }
-      setLoading(false);
-    } catch (error) {
-      console.log(error);
-      setLoading(false);
-      setError(error.response.data.message);
-    }
     }
 
    
   return (
+    // {loading? (<div>Loading...</div>):()}
     <section className="bg-gray-1 py-20 dark:bg-dark lg:py-[120px]">
       <div className="container mx-auto">
         <div className="-mx-4 flex flex-wrap">
@@ -65,18 +74,76 @@ const Signup = () => {
                 </a>
               </div>
               <form onSubmit={handleSignup}>
-                <InputBox type="email" name="email" placeholder="Email"  value={email} onChange={(e) => setEmail(e.target.value)}/>
-                <InputBox type="name" name="name" placeholder="name" value={name} onChange={(e) => setname(e.target.value)}/>
+                <InputBox type="email" name="email" placeholder="Email"  labelText={emailMessage} value={email} onChange={(e) => {
+                setEmail(e.target.value)
+                
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                  setEmailMessage("Invalid email format");
+                  setValid(false);
+                } else {
+                  setEmailMessage("");
+                  setValid(true);
+                }
+              }
+
+                  
+                }/>
+                <InputBox type="text" name="name" placeholder="name" labelText={nameMessage} value={name} onChange={(e) => {setname(e.target.value)
+                  const nameRegex = /^[a-zA-Z ]+$/;
+                  if(e.target.value.startsWith(" ")||e.target.value.endsWith(" ")||e.target.value===""){
+                    setNameMessage("Name Can't start or end with space");
+                    return;
+                  }
+                  if (!nameRegex.test(name)) {
+                    setNameMessage("Invalid name format");
+                    setValid(false);
+                  } else {
+                    setNameMessage("");
+                    setValid(true);
+                  }
+                }}/>
                 <InputBox
                   type="password"
                   name="password"
                   placeholder="Password"
-                  value={password} onChange={(e) => setPassword(e.target.value)}
+                  value={password}
+                  labelText={passwordMessage}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    const passwordRules = [
+                      /[a-z]+/, // lowercase
+                      /[A-Z]+/, // uppercase
+                      /[0-9]+/, // digit
+                      /[!@#$%^&*]+/, // special character
+                    ];
+                    if(e.target.value===0){
+                      setPasswordMessage('');
+                      setValid(false);
+                      return;
+                    }
+                    if(e.target.value.length<8){
+                      setPasswordMessage("Password must be at least 8 characters long");
+                      setValid(false);
+                      return;
+                    }
+                    const passwordStrength = passwordRules.every((rule) =>
+                      rule.test(e.target.value)
+                    );
+                    if (!passwordStrength) {
+                      setValid(false);
+                      setPasswordMessage("Weak password");
+                    }
+                    else{
+                      setValid(true);
+                      setPasswordMessage("Strong password");
+                    }
+                  }}
                 />
                 <div className="mb-10">
                   <input
                     type="submit"
-                    value="Sign In"
+                    value="Sign Up"
                     className="w-full cursor-pointer rounded-md border border-primary bg-primary px-5 py-3 text-base font-medium text-black transition hover:bg-opacity-90"
                   />
                 </div>
@@ -88,7 +155,8 @@ const Signup = () => {
                 
                 <li className="w-full px-2">
                   <a
-                    href="/#"
+                    
+                    onClick={handleGoogleSignup}
                     className="flex h-11 items-center justify-center rounded-md bg-[#D64937] hover:bg-opacity-90"
                   >
                     <svg
@@ -115,8 +183,8 @@ const Signup = () => {
               <p className="text-base text-body-color dark:text-dark-6">
                 <span className="pr-0.5">Already have an account?</span>
                 <a
-                  href="/"
-                  className="text-primary hover:underline"
+                  href="/login"
+                  className="text-pink-500 hover:underline"
                 >
                   Log In
                 </a>

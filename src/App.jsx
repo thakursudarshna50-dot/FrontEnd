@@ -1,42 +1,25 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import Signup from './Components/signup'
 import { createBrowserRouter, RouterProvider, BrowserRouter, Routes, Route } from 'react-router'
 import Login from './Components/login'
+import { Provider } from 'react-redux'
+import store from './redux/store'
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 function App() {
-  const [count, setCount] = useState(0)
-
-  // const router = createBrowserRouter([
-  //   {
-  //     path: "/",
-  //     element: <Login />,
-  //     children:[
-  //       {
-  //         path: "/",
-  //         element: <Login />,
-  //       },
-  //       {
-  //         path: "/signup",
-  //         element: <Signup />,
-  //       },
-  //     ]
-  //   },
-  //   {
-  //     path: "/signup",
-  //     element: <Signup />,
-  //   },
-  // ])
 
   return (
     <>
-    {/* <RouterProvider router={router} /> */}
     <BrowserRouter>
+    <Provider store={store}>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
       </Routes>
+      <ToastContainer position="top-right" autoClose={3000} />
+
+      </Provider>
     </BrowserRouter>
     </>
   )
