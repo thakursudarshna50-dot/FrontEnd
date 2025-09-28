@@ -1,12 +1,11 @@
 import React,{useState,useEffect} from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";  
 import {useSelector,useDispatch} from "react-redux";
 import {signup} from "../features/auth/authSlice";
 
 const InputBox = ({ type, placeholder, name, value, onChange,labelText }) => {
-     
-
-    return (
+       return (
       <div className="mb-6">
         <input
           type={type}
@@ -15,24 +14,43 @@ const InputBox = ({ type, placeholder, name, value, onChange,labelText }) => {
           value={value}
           onChange={onChange}
           className="w-full rounded-md border border-stroke bg-transparent px-5 py-3 text-base text-black-900 outline-none focus:border-primary focus-visible:shadow-none dark:border-dark-3 dark:text-grey-500"
+          
         />
-        {((labelText!=null)&&labelText!=="")?<label className={ (labelText==="Strong password")?`text-green-500`:`text-red-500`}>{labelText}</label>:null}
+        {((labelText!=null)&&labelText!=="")?<p className={ (labelText==="Strong password")?`text-green-500`:`text-red-500`}>{labelText}</p>:null}
       </div>
     );
   };
+
+const PasswordInputBox=({type,placeholder,name,value,onChange,labelText}) => {
+  return <div className="mb-6">
+  <input type={type} placeholder={placeholder} name={name} value={value} onChange={onChange} 
+  className="w-full rounded-md border border-stroke bg-transparent px-5 py-3 text-base text-black-900 outline-none focus:border-primary focus-visible:shadow-none dark:border-dark-3 dark:text-grey-500"
+  />
+  
+  {labelText}
+  </div>
+}
 const Signup = () => {
+    const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [name, setname] = useState("");
     const [password, setPassword] = useState("");
     const [passwordMessage, setPasswordMessage] = useState("");
     const [emailMessage, setEmailMessage] = useState("");
     const [nameMessage, setNameMessage] = useState("");
+    const [confirmpassword,setConfirmPassword]=useState("");
+    const [confirmPasswordMessage,setConfirmPasswordMessage]=useState("");
+    const [toggle,setToggle]=useState(true);
+    const [inputType,setInputType]=useState("password");
     const [valid, setValid] = useState(false);
     const dispatch=useDispatch();
-    
+   
+    const response = useSelector((state) => state.auth);
+    console.log("Debugging -> signup api response",response)
+
     const handleGoogleSignup = () => {
       window.location.href = "/api/user/auth/google";}
-
+     
     const handleSignup = async (e) => {
       e.preventDefault();
       if(email===""||name===""||password===""){
@@ -44,11 +62,13 @@ const Signup = () => {
           console.log("Check the fields again");
           return;
         }else{
-          await dispatch(signup({ email, name, password }));
-          const {token} = useSelector((state) => state.auth);
-          if(token){
-            window.location.href = "/";
-          }}
+          const result =await dispatch(signup({ email, name, password })).unwrap();
+          if(response){
+            console.log("Signup successful---->>>>>>", result);
+            try { localStorage.setItem('auth', JSON.stringify(result)); } catch {}
+            navigate('/home');
+          }
+          }
       } catch (error) {
         console.log(error);
       }
@@ -68,7 +88,7 @@ const Signup = () => {
                   className="mx-auto inline-block max-w-[160px]"
                 >
                   <img
-                    src="https://cdn.tailgrids.com/assets/images/logo/logo-primary.svg"
+                    src="https://lh7-rt.googleusercontent.com/docsz/AD_4nXeMLgOCe_g94UdejxW6-GqSVt9MAZQVEidXUyj2EvVXGt1l_NYESYTWZ_mI_hPUyC7Ld8VVmkA1ZtUhij339bbb_6-zE9AibUtZlIdC-a8f75IE-PA_6gSH6XY6t4FxPgrJQ1xw-9KXOzpcYLgFZLAkwfzW?key=U4iAWSLrY3Z3RjJtAhAH_Q"
                     alt="logo"
                   />
                 </a>
@@ -103,40 +123,67 @@ const Signup = () => {
                     setValid(true);
                   }
                 }}/>
+                <div className="relative">
+                  <PasswordInputBox
+                    type={inputType}
+                    name="password"
+                    placeholder="Password"
+                    value={password}
+                    labelText={passwordMessage}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      const passwordRules = [
+                        /[a-z]+/, // lowercase
+                        /[A-Z]+/, // uppercase
+                        /[0-9]+/, // digit
+                        /[!@#$%^&*]+/, // special character
+                      ];
+                      if(e.target.value===0){
+                        setPasswordMessage('');
+                        setValid(false);
+                        return;
+                      }
+                      if(e.target.value.length<8){
+                        setPasswordMessage("Password must be at least 8 characters long");
+                        setValid(false);
+                        return;
+                      }
+                      const passwordStrength = passwordRules.every((rule) =>
+                        rule.test(e.target.value)
+                      );
+                      if (!passwordStrength) {
+                        setValid(false);
+                        setPasswordMessage("Weak password");
+                      }
+                      else{
+                        setValid(true);
+                        setPasswordMessage("Strong password");
+                      }
+                    }}
+                  />
+                  <button
+                    className={"absolute top-4 right-4 z-10"}
+                    onClick={() => {
+                      setToggle((prev)=>!prev);
+                      setInputType(toggle ? "text" : "password")}}>
+                      {toggle ? <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg> : <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-closed-icon lucide-eye-closed"><path d="m15 18-.722-3.25"/><path d="M2 8a10.645 10.645 0 0 0 20 0"/><path d="m20 15-1.726-2.05"/><path d="m4 15 1.726-2.05"/><path d="m9 18 .722-3.25"/></svg>}
+                    </button>
+                </div>
                 <InputBox
                   type="password"
-                  name="password"
-                  placeholder="Password"
-                  value={password}
-                  labelText={passwordMessage}
+                  name="confirmpassword"
+                  placeholder="Confirm Password"
+                  value={confirmpassword}
+                  labelText={confirmPasswordMessage}
                   onChange={(e) => {
-                    setPassword(e.target.value);
-                    const passwordRules = [
-                      /[a-z]+/, // lowercase
-                      /[A-Z]+/, // uppercase
-                      /[0-9]+/, // digit
-                      /[!@#$%^&*]+/, // special character
-                    ];
-                    if(e.target.value===0){
-                      setPasswordMessage('');
+                    setConfirmPassword(e.target.value);
+                    if(e.target.value!==password){
                       setValid(false);
-                      return;
-                    }
-                    if(e.target.value.length<8){
-                      setPasswordMessage("Password must be at least 8 characters long");
-                      setValid(false);
-                      return;
-                    }
-                    const passwordStrength = passwordRules.every((rule) =>
-                      rule.test(e.target.value)
-                    );
-                    if (!passwordStrength) {
-                      setValid(false);
-                      setPasswordMessage("Weak password");
+                      setConfirmPasswordMessage("Passwords do not match");
                     }
                     else{
                       setValid(true);
-                      setPasswordMessage("Strong password");
+                      setConfirmPasswordMessage("Passwords match");
                     }
                   }}
                 />

@@ -2,8 +2,9 @@ import React,{useState} from "react";
 import { useDispatch } from "react-redux";
 import { toast } from 'react-toastify';
 import { login } from "../features/auth/authSlice";
-
+import { useNavigate } from "react-router-dom";
 const InputBox = ({ type, placeholder, name, value, onChange }) => {
+  const navigate=useNavigate();
   return (
     <div className="mb-6">
       <input
@@ -19,31 +20,64 @@ const InputBox = ({ type, placeholder, name, value, onChange }) => {
 };
 
 const Signin = () => {
-
+  const navigate=useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
   const handleGoogleLogin = (e) => {
     e.preventDefault();
     window.location.href = "/api/user/auth/google";
+    // localStorage.setItem('Login', 'true');
   };
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     console.log(email, password);
     try {
-    dispatch(login({ email, password }));
-    const {token}=useSelector((state)=>state.auth);
-    const toast=useSelector((state)=>state.auth.toast);
-    if(toast){
-      toast.error(toast);
-    }
-    if(token){
-      toast.success("Login successful");
-      window.location.href = "/";
-    }}
-    catch (error) {
-      toast.error("Login failed");
-      console.log(error);
+      const result = await dispatch(login({ email, password })).unwrap();
+      // Persist auth so Navbar can rehydrate after refresh
+      try {
+        // localStorage.setItem('auth', JSON.stringify(result)); // { token, user }
+      } catch {}
+
+      const cookieStr = document.cookie || '';
+      const cookies = cookieStr
+        ? cookieStr.split('; ').reduce((prev, curr) => {
+            const [key, value] = curr.split('=');
+            if (key) prev[key] = decodeURIComponent(value || '');
+            return prev;
+          }, {})
+        : {};
+        console.log("cookies",cookies,"\n",cookieStr)
+      const toastMsg = cookies['toast'];
+      if (toastMsg) {
+        toast.success(toastMsg);
+        // toast.error(toastMsg);
+        document.cookie = 'toast=; Max-Age=0; path=/';
+      }
+       console.log('try block ended')
+      setTimeout(() => {
+        localStorage.setItem('Login', 'true');
+        navigate('/');
+      }, 300);
+    } catch (error) {
+
+      const cookieStr = document.cookie || '';
+      const cookies = cookieStr
+        ? cookieStr.split('; ').reduce((prev, curr) => {
+            const [key, value] = curr.split('=');
+            if (key) prev[key] = decodeURIComponent(value || '');
+            return prev;
+          }, {})
+        : {};
+
+      const toastMsg = cookies['toast'] || error?.response?.data?.message;
+      if (toastMsg) {
+        toast.warning(toastMsg);
+        document.cookie = 'toast=; Max-Age=0; path=/';
+      } else {
+        toast.error('Login failed');
+      }
+      console.log('we have entered the error block',error);
     }
   };
   return (
@@ -58,7 +92,7 @@ const Signin = () => {
                   className="mx-auto inline-block max-w-[160px]"
                 >
                   <img
-                    src="https://cdn.tailgrids.com/assets/images/logo/logo-primary.svg"
+                    src="https://lh7-rt.googleusercontent.com/docsz/AD_4nXeMLgOCe_g94UdejxW6-GqSVt9MAZQVEidXUyj2EvVXGt1l_NYESYTWZ_mI_hPUyC7Ld8VVmkA1ZtUhij339bbb_6-zE9AibUtZlIdC-a8f75IE-PA_6gSH6XY6t4FxPgrJQ1xw-9KXOzpcYLgFZLAkwfzW?key=U4iAWSLrY3Z3RjJtAhAH_Q"
                     alt="logo"
                   />
                 </a>

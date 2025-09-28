@@ -4,10 +4,10 @@
 @tailwind utilities; */
 
 .basecolors{
-primary-color: #242424;
-secondary-color: #df9693; 
-primary-text-color: #fff;
-secondary-text-color: #f7c9c3;}
+--primary-color: #242424;
+--secondary-color: #df9693; 
+--primary-text-color: #fff;
+--secondary-text-color: #f7c9c3;}
 
 /* :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -77,3 +77,40 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 } */
+
+
+
+:root {
+  --color-primary: #fff;   
+  --color-secondary: #01021d;
+  --color-paragraph: #ffd5d9;
+  --color-nav: #ffffffbd;
+  /* Neutrals */
+  --color-bg: #010216;         
+  --color-surface: #f0a76b;    
+  --color-text: hsl(0, 8%, 65%);    /* #e6e6f0 */
+  --color-text-muted: hsl(0, 86%, 78%); /* #a3a3b0 */
+  --color-border: hsl(0, 100%, 78%);     /* #2a2a35 */
+
+  /* Typography */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Scale */
+  --radius: 10px;
+}
+
+html, body {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+/* Utility: clamp text to a fixed number of lines */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-clamp: 3;
+  overflow: hidden;
+}

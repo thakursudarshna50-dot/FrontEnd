@@ -11,22 +11,27 @@ const initialState = {
 export const signup=createAsyncThunk("auth/signup",async(user)=>{
     try {
         const response=await apiClient.post("/user/signup",user);
-        console.log('this is thunk log',response.data);
-        return response.data;
+        console.log('this is thunk log',response.data.data);
+        return response.data.data;
     } catch (error) {
-        return error.response.data;
+        return thunkAPI.rejectWithValue(error.response?.data?.message || "Something went wrong");
     }
 })
 
-export const login=createAsyncThunk("auth/login",async(user)=>{
-    try {
-        console.log(" this is the thunk and the user here:",user)
-        const response=await apiClient.post("/user/login",user);
-        return response.data;
-    } catch (error) {
-        return error.response.data;
+export const login=createAsyncThunk(
+    "auth/login",
+    async (user, thunkAPI)=>{
+        try {
+            console.log(" this is the thunk and the user here:",user)
+            const response=await apiClient.post("/user/login",user);
+            console.log('this is  Login thunk log',response.data.data.user);
+            return response.data.data;
+        } catch (error) {
+            const payload = error?.response?.data || { message: 'Login failed' };
+            return thunkAPI.rejectWithValue(payload);
+        }
     }
-})
+)
 export const profile=createAsyncThunk('auth/Profile',async(id)=>{
     try {
         const response=await apiClient.get(`/user/profile?id=${id}`);
@@ -38,9 +43,10 @@ export const profile=createAsyncThunk('auth/Profile',async(id)=>{
 export const googleSignup=createAsyncThunk('auth/googleSignup',async(user)=>{
     try {
         const response=await apiClient.post("/user/google",user);
-        return response.data;
+        console.log('this is gooogle signup thunk log',response.data.data.user);
+        return response.data.data;
     } catch (error) {
-        return error.response.data;
+        return error.response.data.data;
     }
 })
 
@@ -56,9 +62,14 @@ export const logout=createAsyncThunk('auth/logout',async()=>{
 
 const authSlice = createSlice({
     name: 'auth',          
-    initialState: initialState,  // initial state
+    initialState: initialState,  
     reducers: {
-    
+        // Hydrate auth state from persisted storage (e.g., localStorage)
+        hydrateAuth: (state, action) => {
+            const { user = null, token = null } = action.payload || {};
+            state.user = user;
+            state.token = token;
+        }
     },
     extraReducers: (builder) => {
         //signup
@@ -67,10 +78,9 @@ const authSlice = createSlice({
         })
         builder.addCase(signup.fulfilled,(state,action)=>{
             state.loading=false;
-            state.user=action.payload.data.user;
-            state.token=action.payload.data.token;
-            console.log('this is reducer log',state.user);
-            console.log('this is reducer log',state.token);
+            // signup thunk returns response.data.data => { token, user }
+            state.user=action.payload.user;
+            state.token=action.payload.token;
         })
         builder.addCase(signup.rejected,(state,action)=>{
             state.loading=false;
@@ -132,6 +142,7 @@ const authSlice = createSlice({
     }
   });
 
+  export const { hydrateAuth } = authSlice.actions;
   export default authSlice.reducer;
                 
             
